@@ -1,26 +1,23 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>共有道具 管理カレンダー（iPhone対応）</title>
+  <title>MS-200</title>
   <style>
     :root{
-      --col-red:   #f44336;
-      --col-blue:  #2196f3;
+      --col-red: #f44336;
+      --col-blue: #2196f3;
       --col-green: #4caf50;
       --col-amber: #ffb300;
       --col-purple:#9c27b0;
-
       --grid-gap: 6px;
       --cell-radius: 12px;
       --cell-pad: 8px 6px;
       --cell-h: 64px;
       --font: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN",
-              "Noto Sans JP", "Meiryo", "Segoe UI", system-ui, sans-serif;
+      "Noto Sans JP", "Meiryo", "Segoe UI", system-ui, sans-serif;
     }
-
     * { box-sizing: border-box; }
     html, body{
       height: 100%;
@@ -34,7 +31,6 @@
       -webkit-user-select: none; /* 長押し選択の抑止 */
       -webkit-touch-callout: none; /* iOSの長押しメニュー抑止 */
     }
-
     h1{
       font-size: 1.15rem;
       margin: 0 0 8px 0;
@@ -45,7 +41,6 @@
       font-size: .95rem;
       line-height: 1.5;
     }
-
     .toolbar{
       display: grid;
       grid-template-columns: 1fr;
@@ -56,14 +51,12 @@
       border-radius: 12px;
       margin-bottom: 12px;
     }
-
     .row{
       display: flex;
       align-items: center;
       gap: 10px;
       flex-wrap: wrap;
     }
-
     .palette{
       display: inline-flex;
       gap: 10px;
@@ -95,7 +88,6 @@
     .swatch[aria-checked="true"] .check{
       display: block;
     }
-
     .namebox{
       display: inline-flex;
       align-items: center;
@@ -110,7 +102,6 @@
       border: 1px solid #ddd;
       background: #fff;
     }
-
     .status{
       color: #333;
       font-size: .95rem;
@@ -123,7 +114,6 @@
       color: #2a2a6a;
       border: 1px solid #dbe1ff;
     }
-
     .grid-2{
       display: grid;
       grid-template-columns: 1fr;
@@ -132,7 +122,6 @@
     @media (min-width: 900px){
       .grid-2{ grid-template-columns: 1fr 1fr; }
     }
-
     .month{
       background: #fff;
       border: 1px solid #e5e5e5;
@@ -156,24 +145,21 @@
       color: #777;
       font-size: .9rem;
     }
-
     .cal{
       display: grid;
-      grid-template-columns: repeat(7, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: var(--grid-gap);
       padding: 6px;
       touch-action: none; /* スクロールよりドラッグ優先 */
     }
     .dow{
       text-align: center;
-      color: #666;
+      color: #000; /* 文字を黒に */
       font-weight: 700;
       font-size: .9rem;
       padding: 6px 0;
     }
-    .dow.sun{ color: #d22; }
-    .dow.sat{ color: #06c; }
-
+    /* 週末の特別色は使わない（黒に統一） */
     .cell{
       height: var(--cell-h);
       background: #fff;
@@ -189,6 +175,7 @@
       transition: transform .02s ease-in-out, box-shadow .12s ease-in-out;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
+      color: #000; /* セル内文字も黒 */
     }
     .cell:hover{ box-shadow: 0 1px 4px rgba(0,0,0,.06); }
     .cell:active{ transform: scale(.995); }
@@ -200,17 +187,15 @@
       visibility: hidden;
       pointer-events: none;
     }
-
     .date-num{
       font-weight: 700;
       font-size: .95rem;
-      color: #333;
+      color: #000; /* 黒 */
       position: absolute;
       top: 6px;
       right: 8px;
       line-height: 1;
     }
-
     .label{
       position: absolute;
       left: 8px;
@@ -218,7 +203,7 @@
       padding: 2px 6px;
       border-radius: 8px;
       background: rgba(255,255,255,.85);
-      color: #222;
+      color: #000; /* 黒 */
       font-size: 12px;
       max-width: calc(100% - 16px);
       white-space: nowrap;
@@ -226,64 +211,60 @@
       text-overflow: ellipsis;
       display: none; /* 未設定時は非表示 */
     }
-
-    /* 色が塗られたセルの視認性 */
+    /* 色が塗られたセルでも文字は黒のまま */
     .cell[data-color]{
-      color: #fff;
       border-color: transparent;
-    }
-    .cell[data-color] .date-num{
-      color: rgba(255,255,255,.98);
-      text-shadow: 0 1px 1px rgba(0,0,0,.28);
     }
     .cell[data-name] .label{
       display: inline-block;
     }
+    /* 週末（排除：選択不可） */
+    .cell.wkend{
+      background: #f5f5f5;
+      color: #999;
+      border-style: dashed;
+      cursor: not-allowed;
+      pointer-events: none; /* タップ無効 */
+    }
+    .cell.wkend .date-num{ color: #999; }
   </style>
 </head>
 <body>
-  <h1>共有道具 管理カレンダー（iPhone対応）</h1>
-  <div class="desc">
-    タップで色付け、タップしたままスライドで範囲指定。塗り済みの日をもう一度タップで消去できます。
-  </div>
-
-  <div class="toolbar" role="group" aria-label="操作">
+  <h1>MS-200</h1>
+    <div class="toolbar" role="group" aria-label="操作">
     <div class="row">
       <strong>色：</strong>
       <div class="palette" id="palette" role="radiogroup" aria-label="基準色から選択">
-        <button class="swatch" role="radio" aria-checked="true"  title="赤"
-                data-color="var(--col-red)"    style="background: var(--col-red)"><span class="check">✓</span></button>
+        <button class="swatch" role="radio" aria-checked="true" title="赤"
+          data-color="var(--col-red)" style="background: var(--col-red)"><span class="check">✓</span></button>
         <button class="swatch" role="radio" aria-checked="false" title="青"
-                data-color="var(--col-blue)"   style="background: var(--col-blue)"><span class="check">✓</span></button>
+          data-color="var(--col-blue)" style="background: var(--col-blue)"><span class="check">✓</span></button>
         <button class="swatch" role="radio" aria-checked="false" title="緑"
-                data-color="var(--col-green)"  style="background: var(--col-green)"><span class="check">✓</span></button>
+          data-color="var(--col-green)" style="background: var(--col-green)"><span class="check">✓</span></button>
         <button class="swatch" role="radio" aria-checked="false" title="黄"
-                data-color="var(--col-amber)"  style="background: var(--col-amber)"><span class="check">✓</span></button>
+          data-color="var(--col-amber)" style="background: var(--col-amber)"><span class="check">✓</span></button>
         <button class="swatch" role="radio" aria-checked="false" title="紫"
-                data-color="var(--col-purple)" style="background: var(--col-purple)"><span class="check">✓</span></button>
+          data-color="var(--col-purple)" style="background: var(--col-purple)"><span class="check">✓</span></button>
       </div>
     </div>
     <div class="row namebox">
       <label for="nameInput" style="font-weight:600;">名前：</label>
-      <input id="nameInput" type="text" placeholder="例：山田／A-班／工具A" inputmode="text" />
+      <input id="nameInput" type="text" placeholder="例：山田" inputmode="text" />
+      <button id="saveBtn" type="button" style="margin-left:auto;" aria-label="入力内容を保存">💾 保存</button>
     </div>
     <div class="row">
-      <div class="status" id="status"><span class="chip">モード：タップ＝単日、ドラッグ＝連続</span></div>
+      <div class="status" id="status"><span class="chip">モード：</span></div>
     </div>
   </div>
-
   <div class="grid-2" id="calWrap">
     <!-- カレンダーがJSで挿入されます -->
   </div>
-
   <div class="desc" style="color:#666; margin-top:10px;">
     <ul>
-      <li><strong>タップ</strong>：未塗り→色付け（名前を表示）／塗り済み→消去</li>
-      <li><strong>タップしながらスライド</strong>：連続で塗り（開始が塗り済みなら連続で消去）</li>
-      <li>表示は「今月」と「次の月」です（2か月またぎのドラッグも可）</li>
+      <li><strong>タップ</strong>：未塗り→色付け/再度タップで消去</li>
+      <li><strong>画面を閉じる前に保存ボタンを押す</li>	
     </ul>
   </div>
-
   <script>
     // ====== ユーティリティ ======
     const fmtDate = (d) => {
@@ -292,6 +273,8 @@
       const day = d.getDate().toString().padStart(2,'0');
       return `${y}-${m}-${day}`;
     };
+    // ストレージキー
+    const STORAGE_KEY = 'shared-tools-calendar-v2';
 
     // カラーパレットの初期色
     let currentColor = getComputedStyle(document.documentElement).getPropertyValue('--col-red').trim();
@@ -322,63 +305,70 @@
       title.textContent = `${year}年${monthIndex+1}月`;
       const legend = document.createElement('div');
       legend.className = 'legend';
-      legend.textContent = '日 月 火 水 木 金 土';
+      legend.textContent = '月 火 水 木 金';
       header.appendChild(title);
       header.appendChild(legend);
 
       const cal = document.createElement('div');
       cal.className = 'cal';
-      const dows = ['日','月','火','水','木','金','土'];
-      dows.forEach((w, i)=>{
+
+      const dows = ['月','火','水','木','金'];
+      dows.forEach((w) =>{
         const dow = document.createElement('div');
-        dow.className = 'dow' + (i===0?' sun': (i===6?' sat':'')); // 日:赤、土:青
+        dow.className = 'dow';
         dow.textContent = w;
         cal.appendChild(dow);
       });
 
       const first = new Date(year, monthIndex, 1);
-      const firstDow = first.getDay();
-      const daysInMonth = new Date(year, monthIndex+1, 0).getDate();
-
-      for(let i=0; i<firstDow; i++){
-        const empty = document.createElement('div');
-        empty.className = 'cell disabled';
-        cal.appendChild(empty);
-      }
-
-      for(let d=1; d<=daysInMonth; d++){
-        const cell = document.createElement('button');
-        cell.type = 'button';
-        cell.className = 'cell';
-        const dateObj = new Date(year, monthIndex, d);
-        const dateStr = fmtDate(dateObj);
-        cell.dataset.date = dateStr;
-        cell.setAttribute('aria-label', `${dateStr}`);
-        cell.setAttribute('data-color', ''); // 空にしておくと判定が楽
-
-        const num = document.createElement('div');
-        num.className = 'date-num';
-        num.textContent = d;
-        cell.appendChild(num);
-
-        const label = document.createElement('div');
-        label.className = 'label';
-        label.textContent = '';
-        cell.appendChild(label);
-
-        if(dateStr === todayStr){
-          cell.classList.add('is-today');
-          cell.title = '今日';
-        }
-
-        // クリック（タップ）でトグル
-        cell.addEventListener('click', onCellClick);
-
-        cal.appendChild(cell);
-        dateCellMap.set(dateStr, cell);
-      }
-
-      monthContainer.appendChild(header);
+const daysInMonth = new Date(year, monthIndex+1, 0).getDate();
+// Weekday index helper: Mon=0..Fri=4, Sat/Sun return -1
+const getWIdx = (dow) => (dow>=1 && dow<=5) ? (dow-1) : -1;
+// Add weekday headers
+// (already added above via dows)
+// Leading empties before the first weekday
+let firstWeekdayIdx = -1;
+for(let d=1; d<=7; d++){
+  const dow = new Date(year, monthIndex, d).getDay();
+  const wi = getWIdx(dow);
+  if(wi !== -1){ firstWeekdayIdx = wi; break; }
+}
+for(let i=0; i<firstWeekdayIdx; i++){
+  const empty = document.createElement('div');
+  empty.className = 'cell disabled';
+  cal.appendChild(empty);
+}
+// Generate only Mon-Fri cells
+for(let d=1; d<=daysInMonth; d++){
+  const dateObj = new Date(year, monthIndex, d);
+  const dow = dateObj.getDay();
+  const wi = getWIdx(dow);
+  if(wi === -1) continue; // skip weekends entirely
+  const cell = document.createElement('button');
+  cell.type = 'button';
+  cell.className = 'cell';
+  const dateStr = fmtDate(dateObj);
+  cell.dataset.date = dateStr;
+  cell.setAttribute('aria-label', `${dateStr}`);
+  cell.setAttribute('data-color', '');
+  const num = document.createElement('div');
+  num.className = 'date-num';
+  num.textContent = d;
+  cell.appendChild(num);
+  const label = document.createElement('div');
+  label.className = 'label';
+  label.textContent = '';
+  cell.appendChild(label);
+  if(dateStr === todayStr){
+    cell.classList.add('is-today');
+    cell.title = '今日';
+  }
+  // click to toggle
+  cell.addEventListener('click', onCellClick);
+  cal.appendChild(cell);
+  dateCellMap.set(dateStr, cell);
+}
+monthContainer.appendChild(header);
       monthContainer.appendChild(cal);
       return monthContainer;
     };
@@ -425,7 +415,7 @@
 
     function eraseCell(cell){
       cell.style.background = '';
-      cell.setAttribute('data-color',''); // 空に戻す
+      cell.setAttribute('data-color','');
       cell.removeAttribute('data-name');
       const label = cell.querySelector('.label');
       if(label){
@@ -434,67 +424,67 @@
       }
     }
 
-    // ====== ドラッグ（タップしながらスライド）対応：連続塗り or 連続消し ======
-    // 仕組み：最初に触ったセルが未塗りなら「塗りモード」、塗り済みなら「消しモード」
-    let dragActive = false;
-    let dragMode = 'paint'; // 'paint' | 'erase'
-    let processedDates = new Set();
+    // ====== ドラッグ無効（イベント登録しない） ======
 
-    const calendars = document.querySelectorAll('.cal');
-    calendars.forEach(cal => {
-      // touchstart：モード決定＆最初のセル処理
-      cal.addEventListener('touchstart', (e)=>{
-        if(e.touches.length !== 1) return;
-        dragActive = true;
-        processedDates.clear();
-
-        const t = e.touches[0];
-        const el = document.elementFromPoint(t.clientX, t.clientY);
-        const cell = el ? el.closest('.cell:not(.disabled)') : null;
-        if(!cell) return;
-
-        const painted = !!cell.getAttribute('data-color');
-        dragMode = painted ? 'erase' : 'paint';
-
-        handleCellByMode(cell);
-        processedDates.add(cell.dataset.date);
-
-        // ドラッグ中のスクロールを抑止
-        e.preventDefault();
-      }, {passive:false});
-
-      // touchmove：指の位置のセルを次々処理
-      cal.addEventListener('touchmove', (e)=>{
-        if(!dragActive || e.touches.length !== 1) return;
-        const t = e.touches[0];
-        const el = document.elementFromPoint(t.clientX, t.clientY);
-        const cell = el ? el.closest('.cell:not(.disabled)') : null;
-        if(!cell) return;
-
-        const dateStr = cell.dataset.date;
-        if(dateStr && !processedDates.has(dateStr)){
-          handleCellByMode(cell);
-          processedDates.add(dateStr);
+    // ====== 保存（ローカル保存） ======
+    function collectState(){
+      const painted = [];
+      for(const [date, cell] of dateCellMap.entries()){
+        
+                const color = cell.getAttribute('data-color');
+        if(color){
+          painted.push({date, color, name: cell.getAttribute('data-name') || ''});
         }
-        e.preventDefault();
-      }, {passive:false});
-
-      // touchend / touchcancel：ドラッグ終了
-      const endDrag = ()=>{
-        dragActive = false;
-        processedDates.clear();
+      }
+      return {
+        name: nameInput.value || '',
+        painted
       };
-      cal.addEventListener('touchend', endDrag);
-      cal.addEventListener('touchcancel', endDrag);
-    });
+    }
 
-    function handleCellByMode(cell){
-      if(dragMode === 'paint'){
-        paintCell(cell, currentColor, nameInput.value.trim());
-      }else{
-        eraseCell(cell);
+    function applyState(state){
+      nameInput.value = state?.name || '';
+      if(Array.isArray(state?.painted)){
+        state.painted.forEach(({date, color, name})=>{
+          const cell = dateCellMap.get(date);
+          if(cell){
+            paintCell(cell, color, name || '');
+          }
+        });
       }
     }
+
+    function save(){
+      const state = collectState();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      flashStatus('保存しました');
+    }
+
+    function load(){
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return;
+      try{
+        const state = JSON.parse(raw);
+        applyState(state);
+        flashStatus('保存データを読み込みました');
+      }catch(e){
+        console.warn('load failed', e);
+      }
+    }
+
+    function flashStatus(msg){
+      const st = document.getElementById('status');
+      const b = document.createElement('span');
+      b.className = 'chip';
+      b.textContent = msg;
+      st.appendChild(b);
+      setTimeout(()=>{ b.remove(); }, 1800);
+    }
+
+    document.getElementById('saveBtn').addEventListener('click', save);
+
+    // 初期読込
+    load();
   </script>
 </body>
 </html>
