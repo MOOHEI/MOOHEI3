@@ -227,6 +227,13 @@
       pointer-events: none; /* タップ無効 */
     }
     .cell.wkend .date-num{ color: #999; }
+
+	#saveBtn {
+	padding: 20px 24px;   /* 縦横 約2倍 */
+	font-size: 1.3rem;    /* 文字も大きく */
+	border-radius: 16px;
+	}
+
   </style>
 </head>
 <body>
@@ -253,17 +260,17 @@
       <button id="saveBtn" type="button" style="margin-left:auto;" aria-label="入力内容を保存">💾 保存</button>
     </div>
     <div class="row">
-      <div class="status" id="status"><span class="chip">モード：</span></div>
+      <div class="status" id="status"><span class="chip">操作：</span></div>
     </div>
   </div>
-  <div class="grid-2" id="calWrap">
-    <!-- カレンダーがJSで挿入されます -->
-  </div>
-  <div class="desc" style="color:#666; margin-top:10px;">
     <ul>
       <li><strong>タップ</strong>：未塗り→色付け/再度タップで消去</li>
       <li><strong>画面を閉じる前に保存ボタンを押す</li>	
     </ul>
+  <div class="grid-2" id="calWrap">
+    <!-- カレンダーがJSで挿入されます -->
+  </div>
+  <div class="desc" style="color:#666; margin-top:10px;">
   </div>
   <script>
     // ====== ユーティリティ ======
@@ -305,7 +312,7 @@
       title.textContent = `${year}年${monthIndex+1}月`;
       const legend = document.createElement('div');
       legend.className = 'legend';
-      legend.textContent = '月 火 水 木 金';
+      legend.textContent = '';
       header.appendChild(title);
       header.appendChild(legend);
 
