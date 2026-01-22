@@ -1,0 +1,500 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>共有道具 管理カレンダー（iPhone対応）</title>
+  <style>
+    :root{
+      --col-red:   #f44336;
+      --col-blue:  #2196f3;
+      --col-green: #4caf50;
+      --col-amber: #ffb300;
+      --col-purple:#9c27b0;
+
+      --grid-gap: 6px;
+      --cell-radius: 12px;
+      --cell-pad: 8px 6px;
+      --cell-h: 64px;
+      --font: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN",
+              "Noto Sans JP", "Meiryo", "Segoe UI", system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html, body{
+      height: 100%;
+      -webkit-text-size-adjust: 100%;
+    }
+    body{
+      margin: 14px;
+      font-family: var(--font);
+      color: #222;
+      background: #fafafa;
+      -webkit-user-select: none; /* 長押し選択の抑止 */
+      -webkit-touch-callout: none; /* iOSの長押しメニュー抑止 */
+    }
+
+    h1{
+      font-size: 1.15rem;
+      margin: 0 0 8px 0;
+    }
+    .desc{
+      color: #555;
+      margin-bottom: 10px;
+      font-size: .95rem;
+      line-height: 1.5;
+    }
+
+    .toolbar{
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      padding: 10px 12px;
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+
+    .row{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .palette{
+      display: inline-flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .swatch{
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      box-shadow: 0 0 0 2px rgba(0,0,0,.08);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      outline: none;
+      touch-action: manipulation;
+    }
+    .swatch[aria-checked="true"]{
+      box-shadow: 0 0 0 2px #222;
+    }
+    .swatch .check{
+      display: none;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      text-shadow: 0 1px 2px rgba(0,0,0,.35);
+    }
+    .swatch[aria-checked="true"] .check{
+      display: block;
+    }
+
+    .namebox{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+    }
+    .namebox input{
+      flex: 1 1 auto;
+      padding: 10px 12px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      background: #fff;
+    }
+
+    .status{
+      color: #333;
+      font-size: .95rem;
+    }
+    .status .chip{
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #2a2a6a;
+      border: 1px solid #dbe1ff;
+    }
+
+    .grid-2{
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    @media (min-width: 900px){
+      .grid-2{ grid-template-columns: 1fr 1fr; }
+    }
+
+    .month{
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 12px;
+      padding: 8px;
+    }
+    .month-header{
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      padding: 6px 6px 8px;
+      border-bottom: 1px solid #eee;
+      margin-bottom: 6px;
+    }
+    .month-title{
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+    .legend{
+      margin-left: auto;
+      color: #777;
+      font-size: .9rem;
+    }
+
+    .cal{
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: var(--grid-gap);
+      padding: 6px;
+      touch-action: none; /* スクロールよりドラッグ優先 */
+    }
+    .dow{
+      text-align: center;
+      color: #666;
+      font-weight: 700;
+      font-size: .9rem;
+      padding: 6px 0;
+    }
+    .dow.sun{ color: #d22; }
+    .dow.sat{ color: #06c; }
+
+    .cell{
+      height: var(--cell-h);
+      background: #fff;
+      border: 1px solid #e6e6e6;
+      border-radius: var(--cell-radius);
+      padding: var(--cell-pad);
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-end;
+      position: relative;
+      cursor: pointer;
+      user-select: none;
+      transition: transform .02s ease-in-out, box-shadow .12s ease-in-out;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .cell:hover{ box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+    .cell:active{ transform: scale(.995); }
+    .cell.is-today{
+      outline: 2px solid #14a44d;
+      outline-offset: -2px;
+    }
+    .cell.disabled{
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .date-num{
+      font-weight: 700;
+      font-size: .95rem;
+      color: #333;
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      line-height: 1;
+    }
+
+    .label{
+      position: absolute;
+      left: 8px;
+      bottom: 6px;
+      padding: 2px 6px;
+      border-radius: 8px;
+      background: rgba(255,255,255,.85);
+      color: #222;
+      font-size: 12px;
+      max-width: calc(100% - 16px);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: none; /* 未設定時は非表示 */
+    }
+
+    /* 色が塗られたセルの視認性 */
+    .cell[data-color]{
+      color: #fff;
+      border-color: transparent;
+    }
+    .cell[data-color] .date-num{
+      color: rgba(255,255,255,.98);
+      text-shadow: 0 1px 1px rgba(0,0,0,.28);
+    }
+    .cell[data-name] .label{
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+  <h1>共有道具 管理カレンダー（iPhone対応）</h1>
+  <div class="desc">
+    タップで色付け、タップしたままスライドで範囲指定。塗り済みの日をもう一度タップで消去できます。
+  </div>
+
+  <div class="toolbar" role="group" aria-label="操作">
+    <div class="row">
+      <strong>色：</strong>
+      <div class="palette" id="palette" role="radiogroup" aria-label="基準色から選択">
+        <button class="swatch" role="radio" aria-checked="true"  title="赤"
+                data-color="var(--col-red)"    style="background: var(--col-red)"><span class="check">✓</span></button>
+        <button class="swatch" role="radio" aria-checked="false" title="青"
+                data-color="var(--col-blue)"   style="background: var(--col-blue)"><span class="check">✓</span></button>
+        <button class="swatch" role="radio" aria-checked="false" title="緑"
+                data-color="var(--col-green)"  style="background: var(--col-green)"><span class="check">✓</span></button>
+        <button class="swatch" role="radio" aria-checked="false" title="黄"
+                data-color="var(--col-amber)"  style="background: var(--col-amber)"><span class="check">✓</span></button>
+        <button class="swatch" role="radio" aria-checked="false" title="紫"
+                data-color="var(--col-purple)" style="background: var(--col-purple)"><span class="check">✓</span></button>
+      </div>
+    </div>
+    <div class="row namebox">
+      <label for="nameInput" style="font-weight:600;">名前：</label>
+      <input id="nameInput" type="text" placeholder="例：山田／A-班／工具A" inputmode="text" />
+    </div>
+    <div class="row">
+      <div class="status" id="status"><span class="chip">モード：タップ＝単日、ドラッグ＝連続</span></div>
+    </div>
+  </div>
+
+  <div class="grid-2" id="calWrap">
+    <!-- カレンダーがJSで挿入されます -->
+  </div>
+
+  <div class="desc" style="color:#666; margin-top:10px;">
+    <ul>
+      <li><strong>タップ</strong>：未塗り→色付け（名前を表示）／塗り済み→消去</li>
+      <li><strong>タップしながらスライド</strong>：連続で塗り（開始が塗り済みなら連続で消去）</li>
+      <li>表示は「今月」と「次の月」です（2か月またぎのドラッグも可）</li>
+    </ul>
+  </div>
+
+  <script>
+    // ====== ユーティリティ ======
+    const fmtDate = (d) => {
+      const y = d.getFullYear();
+      const m = (d.getMonth()+1).toString().padStart(2,'0');
+      const day = d.getDate().toString().padStart(2,'0');
+      return `${y}-${m}-${day}`;
+    };
+
+    // カラーパレットの初期色
+    let currentColor = getComputedStyle(document.documentElement).getPropertyValue('--col-red').trim();
+    const paletteEl = document.getElementById('palette');
+    paletteEl.addEventListener('click', (e)=>{
+      const btn = e.target.closest('.swatch');
+      if(!btn) return;
+      [...paletteEl.querySelectorAll('.swatch')].forEach(b=>b.setAttribute('aria-checked','false'));
+      btn.setAttribute('aria-checked','true');
+      currentColor = btn.dataset.color;
+    });
+
+    const nameInput = document.getElementById('nameInput');
+
+    // ====== カレンダー生成 ======
+    const calWrap = document.getElementById('calWrap');
+    const dateCellMap = new Map(); // "YYYY-MM-DD" -> cell element
+    const todayStr = fmtDate(new Date());
+
+    const buildMonth = (year, monthIndex) => {
+      const monthContainer = document.createElement('section');
+      monthContainer.className = 'month';
+
+      const header = document.createElement('div');
+      header.className = 'month-header';
+      const title = document.createElement('div');
+      title.className = 'month-title';
+      title.textContent = `${year}年${monthIndex+1}月`;
+      const legend = document.createElement('div');
+      legend.className = 'legend';
+      legend.textContent = '日 月 火 水 木 金 土';
+      header.appendChild(title);
+      header.appendChild(legend);
+
+      const cal = document.createElement('div');
+      cal.className = 'cal';
+      const dows = ['日','月','火','水','木','金','土'];
+      dows.forEach((w, i)=>{
+        const dow = document.createElement('div');
+        dow.className = 'dow' + (i===0?' sun': (i===6?' sat':'')); // 日:赤、土:青
+        dow.textContent = w;
+        cal.appendChild(dow);
+      });
+
+      const first = new Date(year, monthIndex, 1);
+      const firstDow = first.getDay();
+      const daysInMonth = new Date(year, monthIndex+1, 0).getDate();
+
+      for(let i=0; i<firstDow; i++){
+        const empty = document.createElement('div');
+        empty.className = 'cell disabled';
+        cal.appendChild(empty);
+      }
+
+      for(let d=1; d<=daysInMonth; d++){
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        cell.className = 'cell';
+        const dateObj = new Date(year, monthIndex, d);
+        const dateStr = fmtDate(dateObj);
+        cell.dataset.date = dateStr;
+        cell.setAttribute('aria-label', `${dateStr}`);
+        cell.setAttribute('data-color', ''); // 空にしておくと判定が楽
+
+        const num = document.createElement('div');
+        num.className = 'date-num';
+        num.textContent = d;
+        cell.appendChild(num);
+
+        const label = document.createElement('div');
+        label.className = 'label';
+        label.textContent = '';
+        cell.appendChild(label);
+
+        if(dateStr === todayStr){
+          cell.classList.add('is-today');
+          cell.title = '今日';
+        }
+
+        // クリック（タップ）でトグル
+        cell.addEventListener('click', onCellClick);
+
+        cal.appendChild(cell);
+        dateCellMap.set(dateStr, cell);
+      }
+
+      monthContainer.appendChild(header);
+      monthContainer.appendChild(cal);
+      return monthContainer;
+    };
+
+    // 今月＋次月
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    const nextY = (m === 11) ? y+1 : y;
+    const nextM = (m + 1) % 12;
+    calWrap.appendChild(buildMonth(y, m));
+    calWrap.appendChild(buildMonth(nextY, nextM));
+
+    // ====== 単タップ（トグル：塗る／消す） ======
+    function onCellClick(e){
+      const cell = e.currentTarget;
+      const painted = !!cell.getAttribute('data-color');
+      if(painted){
+        eraseCell(cell);
+      }else{
+        paintCell(cell, currentColor, nameInput.value.trim());
+      }
+    }
+
+    function paintCell(cell, color, name){
+      cell.style.background = color;
+      cell.setAttribute('data-color', color);
+      if(name){
+        cell.setAttribute('data-name', name);
+        const label = cell.querySelector('.label');
+        if(label){
+          label.textContent = name;
+          label.title = name;
+        }
+      }else{
+        cell.removeAttribute('data-name');
+        const label = cell.querySelector('.label');
+        if(label){
+          label.textContent = '';
+          label.removeAttribute('title');
+        }
+      }
+    }
+
+    function eraseCell(cell){
+      cell.style.background = '';
+      cell.setAttribute('data-color',''); // 空に戻す
+      cell.removeAttribute('data-name');
+      const label = cell.querySelector('.label');
+      if(label){
+        label.textContent = '';
+        label.removeAttribute('title');
+      }
+    }
+
+    // ====== ドラッグ（タップしながらスライド）対応：連続塗り or 連続消し ======
+    // 仕組み：最初に触ったセルが未塗りなら「塗りモード」、塗り済みなら「消しモード」
+    let dragActive = false;
+    let dragMode = 'paint'; // 'paint' | 'erase'
+    let processedDates = new Set();
+
+    const calendars = document.querySelectorAll('.cal');
+    calendars.forEach(cal => {
+      // touchstart：モード決定＆最初のセル処理
+      cal.addEventListener('touchstart', (e)=>{
+        if(e.touches.length !== 1) return;
+        dragActive = true;
+        processedDates.clear();
+
+        const t = e.touches[0];
+        const el = document.elementFromPoint(t.clientX, t.clientY);
+        const cell = el ? el.closest('.cell:not(.disabled)') : null;
+        if(!cell) return;
+
+        const painted = !!cell.getAttribute('data-color');
+        dragMode = painted ? 'erase' : 'paint';
+
+        handleCellByMode(cell);
+        processedDates.add(cell.dataset.date);
+
+        // ドラッグ中のスクロールを抑止
+        e.preventDefault();
+      }, {passive:false});
+
+      // touchmove：指の位置のセルを次々処理
+      cal.addEventListener('touchmove', (e)=>{
+        if(!dragActive || e.touches.length !== 1) return;
+        const t = e.touches[0];
+        const el = document.elementFromPoint(t.clientX, t.clientY);
+        const cell = el ? el.closest('.cell:not(.disabled)') : null;
+        if(!cell) return;
+
+        const dateStr = cell.dataset.date;
+        if(dateStr && !processedDates.has(dateStr)){
+          handleCellByMode(cell);
+          processedDates.add(dateStr);
+        }
+        e.preventDefault();
+      }, {passive:false});
+
+      // touchend / touchcancel：ドラッグ終了
+      const endDrag = ()=>{
+        dragActive = false;
+        processedDates.clear();
+      };
+      cal.addEventListener('touchend', endDrag);
+      cal.addEventListener('touchcancel', endDrag);
+    });
+
+    function handleCellByMode(cell){
+      if(dragMode === 'paint'){
+        paintCell(cell, currentColor, nameInput.value.trim());
+      }else{
+        eraseCell(cell);
+      }
+    }
+  </script>
+</body>
+</html>
